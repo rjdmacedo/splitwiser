@@ -13,6 +13,7 @@ node_modules
 /.idea/codeStyles/codeStyleConfig.xml
 /.idea/codeStyles/Project.xml
 /.idea/inspectionProfiles/Project_Default.xml
+/.idea/jsLinters/eslint.xml
 /.idea/dataSources.local.xml
 /.idea/dataSources.xml
 /.idea/material_theme_project_new.xml
