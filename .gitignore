@@ -17,3 +17,5 @@ node_modules
 /.idea/dataSources.xml
 /.idea/material_theme_project_new.xml
 /.idea/vcs.xml
+/.idea/prettier.xml
+/.idea/workspace.xml
