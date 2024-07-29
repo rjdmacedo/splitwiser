@@ -1,3 +1,5 @@
+/.idea/dataSources
+
 node_modules
 
 /build
@@ -8,3 +10,10 @@ node_modules
 /cypress/videos
 /prisma/data.db
 /prisma/data.db-journal
+/.idea/codeStyles/codeStyleConfig.xml
+/.idea/codeStyles/Project.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/dataSources.local.xml
+/.idea/dataSources.xml
+/.idea/material_theme_project_new.xml
+/.idea/vcs.xml

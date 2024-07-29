@@ -7,24 +7,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id    String @id @default(cuid())
-  email String @unique
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  password Password?
-  notes    Note[]
-}
-
-model Password {
-  hash String
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String @unique
-}
-
+// to be removed
 model Note {
   id    String @id @default(cuid())
   title String
@@ -35,4 +18,87 @@ model Note {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String
+  // to be removed
+  notes       Note[]
+  password    Password?
+  groups      UserGroup[]
+  expenses    Expense[]    @relation("UserExpenses")
+  settlements Settlement[] @relation("UserSettlements")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  Split       Split[]
+  Settlement  Settlement[]
+}
+
+model Password {
+  hash String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String @unique
+}
+
+model Group {
+  id         String       @id @default(cuid())
+  name       String
+  members    UserGroup[]
+  expenses   Expense[]    @relation("GroupExpenses")
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  Settlement Settlement[]
+}
+
+model UserGroup {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId    String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  groupId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, groupId])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  date        DateTime
+  group       Group    @relation("GroupExpenses", fields: [groupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  groupId     String
+  paidBy      User     @relation("UserExpenses", fields: [paidById], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  paidById    String
+  splits      Split[]  @relation("ExpenseSplits")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Split {
+  id        String   @id @default(cuid())
+  amount    Float
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId    String
+  expense   Expense  @relation("ExpenseSplits", fields: [expenseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  expenseId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Settlement {
+  id        String   @id @default(cuid())
+  amount    Float
+  paidBy    User     @relation("UserSettlements", fields: [paidById], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  paidById  String
+  paidTo    User     @relation(fields: [paidToId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  paidToId  String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  groupId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

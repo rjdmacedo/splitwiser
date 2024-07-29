@@ -12,7 +12,7 @@ FROM base as deps
 
 WORKDIR /splitwiser
 
-ADD package.json package-lock.json .npmrc ./
+ADD package.json yarn.lock .npmrc ./
 RUN npm install --include=dev
 
 # Setup production node_modules
@@ -21,7 +21,7 @@ FROM base as production-deps
 WORKDIR /splitwiser
 
 COPY --from=deps /splitwiser/node_modules /splitwiser/node_modules
-ADD package.json package-lock.json .npmrc ./
+ADD package.json yarn.lock .npmrc ./
 RUN npm prune --omit=dev
 
 # Build the app
