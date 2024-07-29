@@ -10,26 +10,26 @@ RUN apt-get update && apt-get install -y openssl sqlite3
 # Install all node_modules, including dev dependencies
 FROM base as deps
 
-WORKDIR /myapp
+WORKDIR /splitwiser
 
-ADD package.json .npmrc ./
+ADD package.json package-lock.json .npmrc ./
 RUN npm install --include=dev
 
 # Setup production node_modules
 FROM base as production-deps
 
-WORKDIR /myapp
+WORKDIR /splitwiser
 
-COPY --from=deps /myapp/node_modules /myapp/node_modules
-ADD package.json .npmrc ./
+COPY --from=deps /splitwiser/node_modules /splitwiser/node_modules
+ADD package.json package-lock.json .npmrc ./
 RUN npm prune --omit=dev
 
 # Build the app
 FROM base as build
 
-WORKDIR /myapp
+WORKDIR /splitwiser
 
-COPY --from=deps /myapp/node_modules /myapp/node_modules
+COPY --from=deps /splitwiser/node_modules /splitwiser/node_modules
 
 ADD prisma .
 RUN npx prisma generate
@@ -47,15 +47,15 @@ ENV NODE_ENV="production"
 # add shortcut for connecting to database CLI
 RUN echo "#!/bin/sh\nset -x\nsqlite3 \$DATABASE_URL" > /usr/local/bin/database-cli && chmod +x /usr/local/bin/database-cli
 
-WORKDIR /myapp
+WORKDIR /splitwiser
 
-COPY --from=production-deps /myapp/node_modules /myapp/node_modules
-COPY --from=build /myapp/node_modules/.prisma /myapp/node_modules/.prisma
+COPY --from=production-deps /splitwiser/node_modules /splitwiser/node_modules
+COPY --from=build /splitwiser/node_modules/.prisma /splitwiser/node_modules/.prisma
 
-COPY --from=build /myapp/build /myapp/build
-COPY --from=build /myapp/public /myapp/public
-COPY --from=build /myapp/package.json /myapp/package.json
-COPY --from=build /myapp/start.sh /myapp/start.sh
-COPY --from=build /myapp/prisma /myapp/prisma
+COPY --from=build /splitwiser/build /splitwiser/build
+COPY --from=build /splitwiser/public /splitwiser/public
+COPY --from=build /splitwiser/package.json /splitwiser/package.json
+COPY --from=build /splitwiser/start.sh /splitwiser/start.sh
+COPY --from=build /splitwiser/prisma /splitwiser/prisma
 
 ENTRYPOINT [ "./start.sh" ]
