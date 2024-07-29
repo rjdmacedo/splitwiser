@@ -1,12 +1,12 @@
 import { cssBundleHref } from "@remix-run/css-bundle";
-import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
+import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import {
   Links,
-  LiveReload,
   Meta,
   Outlet,
   Scripts,
+  LiveReload,
   ScrollRestoration,
 } from "@remix-run/react";
 
