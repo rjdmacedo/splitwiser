@@ -9,8 +9,9 @@ import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { Outlet } from "@remix-run/react";
 import React, { FC } from "react";
 
+import { Link, LinkProps } from "~/components/link";
 import { requireUserId } from "~/session.server";
-import { useUser } from "~/utils";
+import { cn, useUser } from "~/utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireUserId(request);
@@ -27,24 +28,38 @@ export default function AuthPage() {
         <Outlet />
       </main>
 
-      <nav className="p-4 sticky bottom-0 flex h-14 bg-primary-background items-center border-t justify-between">
-        <PresentationIcon title="Friends">
+      <nav className="p-4 sticky bottom-0 flex h-16 bg-primary-background items-center border-t justify-between">
+        <NavigationLink to="/auth/friends" title="Friends">
           <UserIcon className="h-5" />
-        </PresentationIcon>
-        <PresentationIcon title="Groups">
+        </NavigationLink>
+
+        <NavigationLink to="/auth/groups" title="Groups">
           <UserGroupIcon className="h-5" />
-        </PresentationIcon>
+        </NavigationLink>
 
         <PlusCircleIcon className="h-10" />
 
-        <PresentationIcon title="Activity">
+        <NavigationLink to="/auth/activity" title="Activity">
           <PresentationChartLineIcon className="h-5" />
-        </PresentationIcon>
-        <PresentationIcon title="Profile">
+        </NavigationLink>
+
+        <NavigationLink to="/auth/profile" title="Profile">
           <UserCircleIcon className="h-5" />
-        </PresentationIcon>
+        </NavigationLink>
       </nav>
     </div>
+  );
+}
+
+export function NavigationLink({
+  to,
+  title,
+  children,
+}: LinkProps & { children: React.ReactNode; title?: string }) {
+  return (
+    <Link to={to} className={({ isActive }) => cn({ "font-bold": isActive })}>
+      <PresentationIcon title={title}>{children}</PresentationIcon>
+    </Link>
   );
 }
 
@@ -55,9 +70,9 @@ interface PresentationIconProps {
 
 const PresentationIcon: FC<PresentationIconProps> = ({ title, children }) => {
   return (
-    <div className="flex flex-col gap-1">
+    <div className={cn("flex flex-col", { "gap-1": !!title })}>
       {children}
-      <span className="text-xs">{title}</span>
+      {title ? <span className="text-xs">{title}</span> : null}
     </div>
   );
 };
