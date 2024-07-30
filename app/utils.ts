@@ -1,9 +1,10 @@
 import { useMatches } from "@remix-run/react";
-import { clsx, type ClassValue } from "clsx"
+import { clsx, type ClassValue } from "clsx";
 import { useMemo } from "react";
-import { twMerge } from "tailwind-merge"
+import { twMerge } from "tailwind-merge";
 
 import type { User } from "~/models/user.server";
+import { useRootLoaderData } from "~/root";
 
 const DEFAULT_REDIRECT = "/";
 
@@ -29,23 +30,6 @@ export function safeRedirect(
   return to;
 }
 
-/**
- * This base hook is used in other hooks to quickly search for specific data
- * across all loader data using useMatches.
- * @param {string} id The route id
- * @returns {JSON|undefined} The router data or undefined if not found
- */
-export function useMatchesData(
-  id: string,
-): Record<string, unknown> | undefined {
-  const matchingRoutes = useMatches();
-  const route = useMemo(
-    () => matchingRoutes.find((route) => route.id === id),
-    [matchingRoutes, id],
-  );
-  return route?.data as Record<string, unknown>;
-}
-
 function isUser(user: unknown): user is User {
   return (
     user != null &&
@@ -55,15 +39,15 @@ function isUser(user: unknown): user is User {
   );
 }
 
-export function useOptionalUser(): User | undefined {
-  const data = useMatchesData("root");
+export function useOptionalUser() {
+  const data = useRootLoaderData();
   if (!data || !isUser(data.user)) {
     return undefined;
   }
   return data.user;
 }
 
-export function useUser(): User {
+export function useUser() {
   const maybeUser = useOptionalUser();
   if (!maybeUser) {
     throw new Error(
@@ -78,5 +62,5 @@ export function validateEmail(email: unknown): email is string {
 }
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }

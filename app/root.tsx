@@ -1,5 +1,5 @@
 import { cssBundleHref } from "@remix-run/css-bundle";
-import { json } from "@remix-run/node";
+import { json, SerializeFrom } from "@remix-run/node";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import {
   Links,
@@ -8,6 +8,7 @@ import {
   Scripts,
   LiveReload,
   ScrollRestoration,
+  useMatches,
 } from "@remix-run/react";
 
 import { getUser } from "~/session.server";
@@ -20,6 +21,11 @@ export const links: LinksFunction = () => [
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   return json({ user: await getUser(request) });
+};
+
+export const useRootLoaderData = () => {
+  const [root] = useMatches();
+  return root?.data as SerializeFrom<typeof loader>;
 };
 
 export default function App() {

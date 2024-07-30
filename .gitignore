@@ -20,3 +20,4 @@ node_modules
 /.idea/vcs.xml
 /.idea/prettier.xml
 /.idea/workspace.xml
+/.idea/.gitignore
