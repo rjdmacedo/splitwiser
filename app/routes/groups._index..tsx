@@ -1,11 +1,10 @@
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 import { ExclamationTriangleIcon, ArrowTurnDownRightIcon } from "@heroicons/react/24/solid";
-import { json, LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { type ActionFunctionArgs, json, LoaderFunctionArgs, type MetaFunction, redirect } from "@remix-run/node";
+import { Form, useLoaderData } from "@remix-run/react";
 import React from "react";
 
 import { Link } from "~/components/link";
-import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import {
@@ -17,7 +16,8 @@ import {
   DrawerTrigger,
   DrawerDescription,
 } from "~/components/ui/drawer";
-import { getGroupDebts, GroupDebt } from "~/models/debt.server";
+import { getUserGroupsDebts, GroupDebt } from "~/models/debt.server";
+import { createGroup } from "~/models/group.server";
 import { requireUserId } from "~/session.server";
 import { cn, currencyFormatter } from "~/utils";
 
@@ -27,15 +27,33 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Get the user ID
   const userId = await requireUserId(request);
   // Get the debts
-  const debts = await getGroupDebts(userId);
+  const debts = await getUserGroupsDebts(userId);
   // Calculate the balance
   const balance = debts.reduce((acc, debt) => acc + debt.balance, 0);
 
   return json({ debts, balance });
 };
 
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const userId = await requireUserId(request);
+
+  const formData = await request.formData();
+  const title = formData.get("name");
+
+  if (typeof title !== "string" || title.length === 0) {
+    return json({ errors: { body: null, title: "Title is required" } }, { status: 400 });
+  }
+
+  // Create the group
+  const group = await createGroup({ name: title, userId });
+
+  return redirect(`/groups/${group.id}`);
+};
+
 export default function AuthGroupsPage() {
   const { debts, balance } = useLoaderData<typeof loader>();
+
+  console.log({ debts, balance });
 
   return (
     <div className="w-full space-y-2">
@@ -76,9 +94,17 @@ function CreateGroupDrawer({ children }: { children: React.ReactNode }) {
           <DrawerTitle>Create group</DrawerTitle>
           <DrawerDescription>Create a group to share expenses with your friends and family.</DrawerDescription>
         </DrawerHeader>
-        <DrawerFooter className="flex flex-col items-center">
-          <ExclamationTriangleIcon className="h-6 w-6 text-yellow-500" />
-          <p>This feature is not yet implemented. Stay tuned!</p>
+        <DrawerFooter>
+          <Form method="post" className="flex flex-col gap-4">
+            <label className="flex flex-col gap-1">
+              <span>Name: </span>
+              <input name="name" className="rounded-md border-2 px-3 text-lg leading-loose" required />
+            </label>
+
+            <Button type="submit" className="self-end">
+              Create group
+            </Button>
+          </Form>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

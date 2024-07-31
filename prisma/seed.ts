@@ -69,7 +69,7 @@ async function seed() {
 
   const group = await prisma.group.create({
     data: {
-      name: "Home",
+      name: "Household",
       members: {
         createMany: {
           data: [{ userId: ana.id }, { userId: rafael.id }, { userId: john.id }],

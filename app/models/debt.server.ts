@@ -1,3 +1,5 @@
+import invariant from "tiny-invariant";
+
 import { prisma } from "~/db.server";
 
 interface FriendDebt {
@@ -51,8 +53,7 @@ export async function getUserDebts(userId: string): Promise<FriendDebt[]> {
   // Combine the debts
   const combinedDebts: Record<string, number> = { ...userOwed };
   for (const friendId in userOwes) {
-    combinedDebts[friendId] =
-      (combinedDebts[friendId] || 0) - userOwes[friendId];
+    combinedDebts[friendId] = (combinedDebts[friendId] || 0) - userOwes[friendId];
   }
 
   // Fetch friend names
@@ -80,7 +81,7 @@ export interface GroupDebt {
   }[];
 }
 
-export async function getGroupDebts(userId: string): Promise<GroupDebt[]> {
+export async function getUserGroupsDebts(userId: string): Promise<GroupDebt[]> {
   // Fetch groups where the user is a member
   const groups = await prisma.group.findMany({
     where: { members: { some: { userId } } },
@@ -110,8 +111,7 @@ export async function getGroupDebts(userId: string): Promise<GroupDebt[]> {
         expense.splits.forEach((split) => {
           if (split.userId === userId) {
             // The user owes this amount to the payer
-            balances[expense.paidById] =
-              (balances[expense.paidById] || 0) - split.amount;
+            balances[expense.paidById] = (balances[expense.paidById] || 0) - split.amount;
             userBalance -= split.amount;
           }
         });
@@ -120,8 +120,7 @@ export async function getGroupDebts(userId: string): Promise<GroupDebt[]> {
         expense.splits.forEach((split) => {
           if (split.userId !== userId) {
             // Other user owes this amount to the current user
-            balances[split.userId] =
-              (balances[split.userId] || 0) + split.amount;
+            balances[split.userId] = (balances[split.userId] || 0) + split.amount;
             userBalance += split.amount;
           }
         });
@@ -144,4 +143,67 @@ export async function getGroupDebts(userId: string): Promise<GroupDebt[]> {
       members,
     };
   });
+}
+
+export async function getUserGroupDebts(userId: string, groupId: string): Promise<GroupDebt> {
+  // Fetch the group and include necessary related data
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    include: {
+      members: { include: { user: true } },
+      expenses: { include: { splits: true, paidBy: true } },
+    },
+  });
+
+  invariant(group, `Group with id ${groupId} not found`);
+
+  const balances: Record<string, number> = {};
+
+  // Initialize balances for each member
+  group.members.forEach((member) => {
+    if (member.userId !== userId) {
+      balances[member.userId] = 0;
+    }
+  });
+
+  let userBalance = 0;
+
+  // Calculate balances based on expenses and splits
+  group.expenses.forEach((expense) => {
+    if (expense.paidById !== userId) {
+      // If the expense was not paid by the user, check splits involving the user
+      expense.splits.forEach((split) => {
+        if (split.userId === userId) {
+          // The user owes this amount to the payer
+          balances[expense.paidById] = (balances[expense.paidById] || 0) - split.amount;
+          userBalance -= split.amount;
+        }
+      });
+    } else {
+      // If the expense was paid by the user, check splits involving other users
+      expense.splits.forEach((split) => {
+        if (split.userId !== userId) {
+          // Other user owes this amount to the current user
+          balances[split.userId] = (balances[split.userId] || 0) + split.amount;
+          userBalance += split.amount;
+        }
+      });
+    }
+  });
+
+  // Convert balances to members format
+  const members = group.members
+    .filter((member) => member.userId !== userId)
+    .map((member) => ({
+      id: member.userId,
+      name: member.user.name,
+      balance: Number((balances[member.userId] || 0).toFixed(2)), // Ensure the balance is a number
+    }));
+
+  return {
+    groupId: group.id,
+    balance: Number(userBalance.toFixed(2)), // Ensure the balance is a number
+    members: members,
+    groupName: group.name,
+  };
 }
