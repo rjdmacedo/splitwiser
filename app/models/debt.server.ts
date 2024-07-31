@@ -68,3 +68,73 @@ export async function getUserDebts(userId: string): Promise<FriendDebt[]> {
 
   return friendDebts;
 }
+
+interface GroupDebt {
+  groupId: string;
+  balance: number;
+  groupName: string;
+  members: {
+    id: string;
+    name: string;
+    balance: number;
+  }[];
+}
+
+export async function getGroupDebts(userId: string): Promise<GroupDebt[]> {
+  // Fetch groups where the user is a member
+  const groups = await prisma.group.findMany({
+    where: { members: { some: { userId } } },
+    include: {
+      members: { include: { user: true } },
+      expenses: { include: { splits: true, paidBy: true } },
+    },
+  });
+
+  // For each group, calculate to whom the user owes money and who owes money to the user
+  const groupDebts: GroupDebt[] = groups.map((group) => {
+    const balances: Record<string, number> = {};
+
+    // Initialize balances for each member
+    group.members.forEach((member) => {
+      if (member.userId !== userId) {
+        balances[member.userId] = 0;
+      }
+    });
+
+    let userBalance = 0;
+
+    // Calculate balances based on expenses and splits
+    group.expenses.forEach((expense) => {
+      expense.splits.forEach((split) => {
+        if (split.userId === userId) {
+          // Current user owes this amount to the payer
+          balances[expense.paidById] =
+            (balances[expense.paidById] || 0) - split.amount;
+          userBalance -= split.amount;
+        } else if (expense.paidById === userId) {
+          // Payer is the current user, so this user owes the current user
+          balances[split.userId] = (balances[split.userId] || 0) + split.amount;
+          userBalance += split.amount;
+        }
+      });
+    });
+
+    // Convert balances to members format
+    const members = group.members
+      .filter((member) => member.userId !== userId)
+      .map((member) => ({
+        id: member.userId,
+        name: member.user.name,
+        balance: balances[member.userId] || 0,
+      }));
+
+    return {
+      groupId: group.id,
+      groupName: group.name,
+      balance: userBalance,
+      members,
+    };
+  });
+
+  return groupDebts;
+}

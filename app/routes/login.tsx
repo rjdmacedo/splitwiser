@@ -56,21 +56,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   return createUserSession({
-    redirectTo,
-    remember: remember === "on" ? true : false,
-    request,
     userId: user.id,
+    request: request,
+    remember: remember === "on",
+    redirectTo: redirectTo,
   });
 };
 
 export const meta: MetaFunction = () => [{ title: "Login" }];
 
 export default function LoginPage() {
-  const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") || "/notes";
-  const actionData = useActionData<typeof action>();
   const emailRef = useRef<HTMLInputElement>(null);
+  const actionData = useActionData<typeof action>();
   const passwordRef = useRef<HTMLInputElement>(null);
+  const [searchParams] = useSearchParams();
+
+  const redirectTo = searchParams.get("redirectTo") || "/friends";
 
   useEffect(() => {
     if (actionData?.errors?.email) {

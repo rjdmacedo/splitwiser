@@ -1,49 +1,42 @@
 import {
   UserIcon,
   UserGroupIcon,
-  UserCircleIcon,
   PlusCircleIcon,
+  UserCircleIcon,
   PresentationChartLineIcon,
 } from "@heroicons/react/24/outline";
-import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { Outlet } from "@remix-run/react";
-import React, { FC } from "react";
+import React from "react";
 
 import { Link, LinkProps } from "~/components/link";
-import { requireUserId } from "~/session.server";
-import { cn, useUser } from "~/utils";
+import { cn } from "~/utils";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUserId(request);
-  return json(null);
-};
+interface LayoutProps {
+  children: React.ReactNode;
+}
 
-export default function AuthPage() {
-  const user = useUser();
-
+export function Layout({ children }: LayoutProps) {
   return (
-    <div className="flex h-full min-h-screen flex-col">
+    <div className="absolute flex h-full w-full min-h-screen flex-col">
       <main className="flex flex-col h-full bg-primary-foreground p-4">
-        <h3 className="mb-2 text-lg">Welcome to Splitwiser, {user.name}</h3>
-        <Outlet />
+        {children}
       </main>
 
-      <nav className="p-4 sticky bottom-0 flex h-16 bg-primary-background items-center border-t justify-between">
-        <NavigationLink to="/auth/friends" title="Friends">
+      <nav className="relative p-4 bottom-0 flex h-16 bg-primary-background items-center border-t justify-between">
+        <NavigationLink to="friends" title="Friends">
           <UserIcon className="h-5" />
         </NavigationLink>
 
-        <NavigationLink to="/auth/groups" title="Groups">
+        <NavigationLink to="groups" title="Groups">
           <UserGroupIcon className="h-5" />
         </NavigationLink>
 
         <PlusCircleIcon className="h-10" />
 
-        <NavigationLink to="/auth/activity" title="Activity">
+        <NavigationLink to="activity" title="Activity">
           <PresentationChartLineIcon className="h-5" />
         </NavigationLink>
 
-        <NavigationLink to="/auth/profile" title="Profile">
+        <NavigationLink to="profile" title="Profile">
           <UserCircleIcon className="h-5" />
         </NavigationLink>
       </nav>
@@ -51,7 +44,7 @@ export default function AuthPage() {
   );
 }
 
-export function NavigationLink({
+function NavigationLink({
   to,
   title,
   children,
@@ -68,11 +61,11 @@ interface PresentationIconProps {
   children: React.ReactNode;
 }
 
-const PresentationIcon: FC<PresentationIconProps> = ({ title, children }) => {
+function PresentationIcon({ title, children }: PresentationIconProps) {
   return (
     <div className={cn("flex flex-col", { "gap-1": !!title })}>
       {children}
       {title ? <span className="text-xs">{title}</span> : null}
     </div>
   );
-};
+}

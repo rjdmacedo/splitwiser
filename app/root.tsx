@@ -11,7 +11,8 @@ import {
   useMatches,
 } from "@remix-run/react";
 
-import { getUser } from "~/session.server";
+import { Layout } from "~/components/layout";
+import { getUser, requireUserId } from "~/session.server";
 import stylesheet from "~/tailwind.css";
 
 export const links: LinksFunction = () => [
@@ -38,7 +39,9 @@ export default function App() {
         <Links />
       </head>
       <body className="h-full">
-        <Outlet />
+        <Layout>
+          <Outlet />
+        </Layout>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />

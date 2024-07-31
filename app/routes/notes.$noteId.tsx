@@ -29,7 +29,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
   await deleteNote({ id: params.noteId, userId });
 
-  return redirect("/auth");
+  return redirect("/notes");
 };
 
 export default function NoteDetailsPage() {
