@@ -31,12 +31,7 @@ export function safeRedirect(
 }
 
 function isUser(user: unknown): user is User {
-  return (
-    user != null &&
-    typeof user === "object" &&
-    "email" in user &&
-    typeof user.email === "string"
-  );
+  return user != null && typeof user === "object" && "email" in user && typeof user.email === "string";
 }
 
 export function useOptionalUser() {
@@ -63,4 +58,13 @@ export function validateEmail(email: unknown): email is string {
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+export function currencyFormatter(amount: number) {
+  return new Intl.NumberFormat("pt-PT", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
 }

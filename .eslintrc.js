@@ -46,10 +46,7 @@ module.exports = {
         ],
       },
       rules: {
-        "react/jsx-no-leaked-render": [
-          "warn",
-          { validStrategies: ["ternary"] },
-        ],
+        "react/jsx-no-leaked-render": ["warn", { validStrategies: ["ternary"] }],
       },
     },
 
@@ -99,12 +96,7 @@ module.exports = {
     {
       files: ["**/*.test.{js,jsx,ts,tsx}"],
       plugins: ["jest", "jest-dom", "testing-library"],
-      extends: [
-        "plugin:jest/recommended",
-        "plugin:jest-dom/recommended",
-        "plugin:testing-library/react",
-        "prettier",
-      ],
+      extends: ["plugin:jest/recommended", "plugin:jest-dom/recommended", "plugin:testing-library/react", "prettier"],
       env: {
         "jest/globals": true,
       },

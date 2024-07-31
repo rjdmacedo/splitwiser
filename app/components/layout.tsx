@@ -17,9 +17,7 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   return (
     <div className="absolute flex h-full w-full min-h-screen flex-col">
-      <main className="flex flex-col h-full bg-primary-foreground p-4">
-        {children}
-      </main>
+      <main className="flex flex-col h-full bg-primary-foreground p-4">{children}</main>
 
       <nav className="relative p-4 bottom-0 flex h-16 bg-primary-background items-center border-t justify-between">
         <NavigationLink to="friends" title="Friends">
@@ -44,11 +42,7 @@ export function Layout({ children }: LayoutProps) {
   );
 }
 
-function NavigationLink({
-  to,
-  title,
-  children,
-}: LinkProps & { children: React.ReactNode; title?: string }) {
+function NavigationLink({ to, title, children }: LinkProps & { children: React.ReactNode; title?: string }) {
   return (
     <Link to={to} className={({ isActive }) => cn({ "font-bold": isActive })}>
       <PresentationIcon title={title}>{children}</PresentationIcon>

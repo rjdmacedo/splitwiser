@@ -12,11 +12,9 @@ async function seed() {
 
   // delete all users from the database
   for (const key in email) {
-    await prisma.user
-      .delete({ where: { email: email[key as keyof typeof email] } })
-      .catch(() => {
-        // no worries if it doesn't exist yet
-      });
+    await prisma.user.delete({ where: { email: email[key as keyof typeof email] } }).catch(() => {
+      // no worries if it doesn't exist yet
+    });
   }
 
   const hashedPassword = await bcrypt.hash("password", 10);
@@ -74,11 +72,7 @@ async function seed() {
       name: "Home",
       members: {
         createMany: {
-          data: [
-            { userId: ana.id },
-            { userId: rafael.id },
-            { userId: john.id },
-          ],
+          data: [{ userId: ana.id }, { userId: rafael.id }, { userId: john.id }],
         },
       },
     },
@@ -297,17 +291,17 @@ async function seed() {
 
       // Splits for the seventh expense (Gym)
       {
-        amount: 33.33,
+        amount: 20,
         userId: ana.id,
         expenseId: gymExpenseId,
       },
       {
-        amount: 33.33,
+        amount: 50,
         userId: rafael.id,
         expenseId: gymExpenseId,
       },
       {
-        amount: 33.33,
+        amount: 30,
         userId: john.id,
         expenseId: gymExpenseId,
       },

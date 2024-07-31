@@ -69,7 +69,7 @@ export async function getUserDebts(userId: string): Promise<FriendDebt[]> {
   return friendDebts;
 }
 
-interface GroupDebt {
+export interface GroupDebt {
   groupId: string;
   balance: number;
   groupName: string;
@@ -91,7 +91,7 @@ export async function getGroupDebts(userId: string): Promise<GroupDebt[]> {
   });
 
   // For each group, calculate to whom the user owes money and who owes money to the user
-  const groupDebts: GroupDebt[] = groups.map((group) => {
+  return groups.map((group) => {
     const balances: Record<string, number> = {};
 
     // Initialize balances for each member
@@ -105,18 +105,27 @@ export async function getGroupDebts(userId: string): Promise<GroupDebt[]> {
 
     // Calculate balances based on expenses and splits
     group.expenses.forEach((expense) => {
-      expense.splits.forEach((split) => {
-        if (split.userId === userId) {
-          // Current user owes this amount to the payer
-          balances[expense.paidById] =
-            (balances[expense.paidById] || 0) - split.amount;
-          userBalance -= split.amount;
-        } else if (expense.paidById === userId) {
-          // Payer is the current user, so this user owes the current user
-          balances[split.userId] = (balances[split.userId] || 0) + split.amount;
-          userBalance += split.amount;
-        }
-      });
+      if (expense.paidById !== userId) {
+        // If the expense was not paid by the user, check splits involving the user
+        expense.splits.forEach((split) => {
+          if (split.userId === userId) {
+            // The user owes this amount to the payer
+            balances[expense.paidById] =
+              (balances[expense.paidById] || 0) - split.amount;
+            userBalance -= split.amount;
+          }
+        });
+      } else {
+        // If the expense was paid by the user, check splits involving other users
+        expense.splits.forEach((split) => {
+          if (split.userId !== userId) {
+            // Other user owes this amount to the current user
+            balances[split.userId] =
+              (balances[split.userId] || 0) + split.amount;
+            userBalance += split.amount;
+          }
+        });
+      }
     });
 
     // Convert balances to members format
@@ -125,16 +134,14 @@ export async function getGroupDebts(userId: string): Promise<GroupDebt[]> {
       .map((member) => ({
         id: member.userId,
         name: member.user.name,
-        balance: balances[member.userId] || 0,
+        balance: Number((balances[member.userId] || 0).toFixed(2)), // Ensure the balance is a number
       }));
 
     return {
       groupId: group.id,
       groupName: group.name,
-      balance: userBalance,
+      balance: Number(userBalance.toFixed(2)), // Ensure the balance is a number
       members,
     };
   });
-
-  return groupDebts;
 }
