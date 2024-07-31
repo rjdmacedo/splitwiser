@@ -5,6 +5,7 @@ import { useLoaderData } from "@remix-run/react";
 import React from "react";
 
 import { Link } from "~/components/link";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -85,8 +86,11 @@ function AddFriendsDrawer({ children }: { children: React.ReactNode }) {
           <DrawerDescription>Add friends to start sharing expenses</DrawerDescription>
         </DrawerHeader>
         <DrawerFooter className="flex flex-col items-center">
-          <ExclamationTriangleIcon className="h-6 w-6 text-yellow-500" />
-          <p>This feature is not yet implemented. Stay tuned!</p>
+          <Alert variant="destructive" className="w-full">
+            <ExclamationTriangleIcon className="h-4 w-4" />
+            <AlertTitle>Feature not implemented</AlertTitle>
+            <AlertDescription>This feature is not implemented yet. Please come back later.</AlertDescription>
+          </Alert>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

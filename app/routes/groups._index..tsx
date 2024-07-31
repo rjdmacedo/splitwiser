@@ -53,8 +53,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export default function AuthGroupsPage() {
   const { debts, balance } = useLoaderData<typeof loader>();
 
-  console.log({ debts, balance });
-
   return (
     <div className="w-full space-y-2">
       <div className="flex items-center justify-end">

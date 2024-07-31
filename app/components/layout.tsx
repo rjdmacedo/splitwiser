@@ -16,10 +16,10 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   return (
-    <div className="absolute flex h-full w-full min-h-screen flex-col">
-      <main className="flex flex-col h-full bg-primary-foreground p-4">{children}</main>
+    <div className="relative flex min-h-screen flex-col">
+      <main className="flex-grow container py-4">{children}</main>
 
-      <nav className="relative p-4 bottom-0 flex h-16 bg-primary-background items-center border-t justify-between">
+      <nav className="sticky z-40 p-4 bottom-0 flex h-16 bg-background items-center border-t justify-between">
         <NavigationLink to="friends" title="Friends">
           <UserIcon className="h-5" />
         </NavigationLink>

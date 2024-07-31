@@ -1,10 +1,14 @@
+import { Expense, Split } from ".prisma/client";
 import { CameraIcon } from "@heroicons/react/24/outline";
 import { ArrowTurnDownRightIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { json, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import { ColumnDef } from "@tanstack/table-core";
+import { format } from "date-fns";
 import React from "react";
 import invariant from "tiny-invariant";
 
+import { DataTable } from "~/components/data-table";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import {
@@ -19,7 +23,7 @@ import {
 import { getUserGroupDebts } from "~/models/debt.server";
 import { getGroupById } from "~/models/group.server";
 import { requireUserId } from "~/session.server";
-import { cn, currencyFormatter } from "~/utils";
+import { cn, currencyFormatter, useUser } from "~/utils";
 
 // @ts-ignore
 export const meta: MetaFunction = ({ data }) => [{ title: `Group: ${data.group.name}` }];
@@ -38,18 +42,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 };
 
 export default function GroupPage() {
-  const {
-    group: { expenses },
-  } = useLoaderData<typeof loader>();
-
   return (
-    <div>
+    <>
       <GroupWallpaper />
-
-      <div className="mt-40">
+      <div className="mt-44 space-y-3">
         <GroupTitle />
+        <GroupExpensesTable />
       </div>
-    </div>
+    </>
   );
 }
 
@@ -113,6 +113,89 @@ function GroupTitle() {
   );
 }
 
+function GroupExpensesTable() {
+  const user = useUser();
+  const {
+    group: { expenses },
+  } = useLoaderData<typeof loader>();
+
+  const columns: ColumnDef<ExpenseDataTable>[] = [
+    { accessorKey: "splits" },
+    { accessorKey: "paidById" },
+    {
+      cell: ({ row }) => {
+        // use date-fns to format the date Jul. 31
+        return format(new Date(row.getValue("createdAt") as string), "MMM. d");
+      },
+      header: "Date",
+      accessorKey: "createdAt",
+    },
+    {
+      cell: ({ row, ...rest }) => {
+        const amount = row.getValue("amount") as number;
+        const paidBy = row.getValue("paidById") as string;
+
+        return (
+          <div className="flex flex-col">
+            <span className="text-lg">{row.getValue("description")}</span>
+            <span
+              className={cn("text-xs", {
+                "text-red-600": paidBy !== user.id,
+                "text-green-600": paidBy === user.id,
+              })}
+            >
+              {paidBy === user.id ? "You" : "Someone"} paid {currencyFormatter(amount)}
+            </span>
+          </div>
+        );
+      },
+      header: "Description",
+      accessorKey: "description",
+    },
+    {
+      cell: ({ row }) => {
+        const expensePaidByUser = row.getValue("paidById") === user.id;
+        const splits = row.getValue("splits") as { userId: string; amount: number }[];
+        const amount = splits.reduce((acc, split) => {
+          if (split.userId === user.id && expensePaidByUser) return acc;
+          if (split.userId !== user.id && !expensePaidByUser) return acc;
+          return acc + split.amount;
+        }, 0);
+        return (
+          <span
+            className={cn({
+              "text-red-600": !expensePaidByUser,
+              "text-green-600": expensePaidByUser,
+            })}
+          >
+            {currencyFormatter(amount)}
+          </span>
+        );
+      },
+      header: "Amount",
+      accessorKey: "amount",
+    },
+  ];
+
+  return (
+    <DataTable
+      data={expenses as unknown as ExpenseDataTable[]}
+      columns={columns}
+      options={{
+        initialState: {
+          columnVisibility: {
+            amount: true,
+            splits: false,
+            paidById: false,
+            createdAt: true,
+            description: true,
+          },
+        },
+      }}
+    />
+  );
+}
+
 function AddGroupImageDrawer({ children }: { children: React.ReactNode }) {
   return (
     <Drawer>
@@ -132,4 +215,12 @@ function AddGroupImageDrawer({ children }: { children: React.ReactNode }) {
       </DrawerContent>
     </Drawer>
   );
+}
+
+interface ExpenseDataTable {
+  splits: Split[];
+  amount: number;
+  paidById: string;
+  createdAt: string;
+  description: string;
 }
