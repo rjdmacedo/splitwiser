@@ -12,25 +12,29 @@ export function DataTable<TData, TValue>({
   data,
   columns,
   options,
-}: DataTableProps<TData, TValue> & { options?: Omit<TableOptions<TData>, "data" | "columns" | "getCoreRowModel"> }) {
+  withHeather = false,
+}: DataTableProps<TData, TValue> & {
+  withHeather?: boolean;
+  options?: Omit<TableOptions<TData>, "data" | "columns" | "getCoreRowModel">;
+}) {
   const table = useReactTable({ data, columns, getCoreRowModel: getCoreRowModel(), ...options });
 
   return (
     <div className="rounded-md border">
       <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
+        {withHeather ? (
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
                     {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+        ) : null}
         <TableBody>
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (

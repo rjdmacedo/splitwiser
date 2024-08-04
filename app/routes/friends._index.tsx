@@ -19,9 +19,10 @@ import {
   DrawerTrigger,
   DrawerDescription,
 } from "~/components/ui/drawer";
+import { UserAvatar } from "~/components/user-avatar";
 import { getUserDebts } from "~/models/debt.server";
 import { requireUserId } from "~/session.server";
-import { cn } from "~/utils";
+import { cn, getUserFirstLetters } from "~/utils";
 
 export const meta: MetaFunction = () => [{ title: "Friends" }];
 
@@ -53,14 +54,7 @@ export default function AuthFriendsPage() {
         {debts.map((debt) => (
           <Link to={debt.friendId} key={debt.friendId}>
             <Card className="flex items-center justify-between p-2">
-              <div className="flex items-center gap-3">
-                <Avatar>
-                  <AvatarFallback className="bg-muted-foreground">
-                    {debt.friendName.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                {debt.friendName}
-              </div>
+              <UserAvatar name={debt.friendName} />
               <div>
                 {debt.amount > 0 ? (
                   <Badge className="bg-green-600">+ {debt.amount.toFixed(2)}€</Badge>

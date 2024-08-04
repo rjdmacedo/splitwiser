@@ -1,5 +1,5 @@
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
-import { ExclamationTriangleIcon, ArrowTurnDownRightIcon } from "@heroicons/react/24/solid";
+import { ArrowTurnDownRightIcon } from "@heroicons/react/24/solid";
 import { type ActionFunctionArgs, json, LoaderFunctionArgs, type MetaFunction, redirect } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import React from "react";
@@ -137,22 +137,17 @@ function MembersList({ members }: { members: GroupDebt["members"] }) {
       {members.map(({ id, name, balance }) => (
         <div
           key={id}
-          className={cn(
-            "text-sm flex items-center gap-1",
-            {
-              "text-green-600": balance > 0,
-              "text-red-600": balance < 0,
-              "text-gray-600": balance === 0,
-            },
-            {},
-          )}
+          className={cn("text-sm flex items-center gap-1", {
+            "text-red-600": balance < 0,
+            "text-green-600": balance >= 0,
+          })}
         >
           <ArrowTurnDownRightIcon className="-mt-1.5 h-4 w-4 inline" />
           {balance > 0
-            ? `${name} owes you ${currencyFormatter(balance)}`
+            ? `${name} owes you ${currencyFormatter(balance)}.`
             : balance < 0
-              ? `You owe ${name} ${currencyFormatter(balance)}`
-              : "You're even"}
+              ? `You owe ${name} ${currencyFormatter(balance)}.`
+              : `You and ${name} are even.`}
         </div>
       ))}
     </div>

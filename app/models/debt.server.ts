@@ -77,6 +77,7 @@ export interface GroupDebt {
   members: {
     id: string;
     name: string;
+    email: string;
     balance: number;
   }[];
 }
@@ -133,6 +134,7 @@ export async function getUserGroupsDebts(userId: string): Promise<GroupDebt[]> {
       .map((member) => ({
         id: member.userId,
         name: member.user.name,
+        email: member.user.email,
         balance: Number((balances[member.userId] || 0).toFixed(2)), // Ensure the balance is a number
       }));
 
@@ -197,6 +199,7 @@ export async function getUserGroupDebts(userId: string, groupId: string): Promis
     .map((member) => ({
       id: member.userId,
       name: member.user.name,
+      email: member.user.email,
       balance: Number((balances[member.userId] || 0).toFixed(2)), // Ensure the balance is a number
     }));
 
