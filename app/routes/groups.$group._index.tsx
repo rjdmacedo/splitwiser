@@ -1,10 +1,4 @@
-import {
-  ArrowLeftStartOnRectangleIcon,
-  CameraIcon,
-  CogIcon,
-  TrashIcon,
-  UserPlusIcon,
-} from "@heroicons/react/24/outline";
+import { CogIcon, TrashIcon, CameraIcon } from "@heroicons/react/24/outline";
 import { ArrowTurnDownRightIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { type ActionFunctionArgs, json, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
@@ -31,6 +25,7 @@ import { Input } from "~/components/ui/input";
 import { Separator } from "~/components/ui/separator";
 import { getUserGroupDebts } from "~/models/debt.server";
 import { getGroupById, updateGroup } from "~/models/group.server";
+import { LeaveGroupButton } from "~/routes/resource.group.leave";
 import { requireUserId } from "~/session.server";
 import { cn, currencyFormatter, getUsersBalance, useUser } from "~/utils";
 
@@ -133,10 +128,7 @@ function GroupActions() {
           <Separator />
           <div className="space-y-2">
             <span className="text-sm">Advanced settings</span>
-            <Button variant="secondary" disabled={haveDebt} className="w-full">
-              <ArrowLeftStartOnRectangleIcon className="h-4 w-4 mr-2" />
-              Leave group
-            </Button>
+            <LeaveGroupButton groupId={group.id} />
             {haveDebt ? (
               <span className="text-xs flex justify-center text-muted-foreground">
                 You cant leave the group because you have debts with other group members.

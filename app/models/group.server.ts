@@ -93,3 +93,24 @@ export async function addMemberToGroup(groupId: string, email: string) {
     throw new Error(err.message);
   }
 }
+
+export async function removeMemberFromGroup(groupId: string, userId: string) {
+  try {
+    return await prisma.group.update({
+      where: { id: groupId },
+      data: {
+        members: {
+          delete: {
+            userId_groupId: {
+              userId,
+              groupId,
+            },
+          },
+        },
+      },
+    });
+  } catch (error) {
+    const err = error as Error;
+    throw new Error(err.message);
+  }
+}

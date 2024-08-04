@@ -12,6 +12,12 @@ import { Input } from "~/components/ui/input";
 import { addMemberToGroup } from "~/models/group.server";
 import { requireUser } from "~/session.server";
 
+interface AddMemberFormProps {
+  groupId: string;
+  onCancel: () => void;
+  onSuccess: () => void;
+}
+
 export const action = async ({ request }: ActionFunctionArgs) => {
   await requireUser(request);
 
@@ -31,15 +37,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 };
 
-export function AddMemberForm({
-  groupId,
-  onCancel,
-  onSuccess,
-}: {
-  groupId: string;
-  onCancel: () => void;
-  onSuccess: () => void;
-}) {
+export function AddMemberForm({ groupId, onCancel, onSuccess }: AddMemberFormProps) {
   const fetcher = useFetcher<typeof action>();
   const form = useRemixForm<AddMembersToGroupFormData>({
     resolver: AddMembersToGroupResolver,
@@ -99,6 +97,6 @@ const AddMembersToGroupSchema = zod.object({
   groupId: zod.string(),
 });
 
-export const AddMembersToGroupResolver = zodResolver(AddMembersToGroupSchema);
+const AddMembersToGroupResolver = zodResolver(AddMembersToGroupSchema);
 
-export type AddMembersToGroupFormData = zod.infer<typeof AddMembersToGroupSchema>;
+type AddMembersToGroupFormData = zod.infer<typeof AddMembersToGroupSchema>;
