@@ -1,11 +1,14 @@
-import type { MetaFunction } from "@remix-run/node";
+import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 
+import { ExpenseForm } from "~/components/form/expense-form";
 import { GoBackIcon } from "~/components/go-back-icon";
 import { PageBody } from "~/components/page-body";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 
 export const meta: MetaFunction = () => [{ title: "Create Expense" }];
+
+export const action = async (_: ActionFunctionArgs) => {};
 
 export default function ExpenseCreatePage() {
   return (
@@ -14,9 +17,7 @@ export default function ExpenseCreatePage() {
         <span className="text-2xl text-background">Create an expense</span>
       </PageHeader>
       <PageBody>
-        Lorem ipsum dolor sit amet, consectetur adipisicing elit. Architecto assumenda delectus eaque, enim fuga ipsam
-        minus molestias mollitia placeat reprehenderit. Asperiores beatae earum enim eos ipsum natus reiciendis? Enim,
-        impedit!
+        <ExpenseForm />
       </PageBody>
     </>
   );

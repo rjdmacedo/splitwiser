@@ -45,7 +45,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  console.log("here");
   const formData = await request.formData();
   const id = formData.get("group-id")!;
   const name = formData.get("group-name");

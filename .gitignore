@@ -21,3 +21,4 @@ node_modules
 /.idea/prettier.xml
 /.idea/workspace.xml
 /.idea/.gitignore
+/.idea/jsLibraryMappings.xml
