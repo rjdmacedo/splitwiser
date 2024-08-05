@@ -5,6 +5,7 @@ import { useLoaderData } from "@remix-run/react";
 import React from "react";
 
 import { Link } from "~/components/link";
+import { PageBody } from "~/components/page-body";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
@@ -41,32 +42,34 @@ export default function AuthFriendsPage() {
   const { debts, balance } = useLoaderData<typeof loader>();
 
   return (
-    <div className="w-full space-y-2">
-      <div className="flex items-center justify-end">
-        <AddFriendsDrawer>
-          <Button variant="ghost">Add friends</Button>
-        </AddFriendsDrawer>
-      </div>
+    <PageBody>
+      <div className="w-full space-y-2">
+        <div className="flex items-center justify-end">
+          <AddFriendsDrawer>
+            <Button variant="ghost">Add friends</Button>
+          </AddFriendsDrawer>
+        </div>
 
-      <BalanceAndFilter balance={balance} />
+        <BalanceAndFilter balance={balance} />
 
-      <div className="flex flex-col space-y-3">
-        {debts.map((debt) => (
-          <Link to={debt.friendId} key={debt.friendId}>
-            <Card className="flex items-center justify-between p-2">
-              <UserAvatar name={debt.friendName} />
-              <div>
-                {debt.amount > 0 ? (
-                  <Badge className="bg-green-600">+ {debt.amount.toFixed(2)}€</Badge>
-                ) : (
-                  <Badge variant="destructive">- {Math.abs(debt.amount).toFixed(2)}€</Badge>
-                )}
-              </div>
-            </Card>
-          </Link>
-        ))}
+        <div className="flex flex-col space-y-3">
+          {debts.map((debt) => (
+            <Link to={debt.friendId} key={debt.friendId}>
+              <Card className="flex items-center justify-between p-2">
+                <UserAvatar name={debt.friendName} />
+                <div>
+                  {debt.amount > 0 ? (
+                    <Badge className="bg-green-600">+ {debt.amount.toFixed(2)}€</Badge>
+                  ) : (
+                    <Badge variant="destructive">- {Math.abs(debt.amount).toFixed(2)}€</Badge>
+                  )}
+                </div>
+              </Card>
+            </Link>
+          ))}
+        </div>
       </div>
-    </div>
+    </PageBody>
   );
 }
 

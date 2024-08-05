@@ -1,4 +1,4 @@
-import { CogIcon, TrashIcon, CameraIcon } from "@heroicons/react/24/outline";
+import { CogIcon, CameraIcon } from "@heroicons/react/24/outline";
 import { ArrowTurnDownRightIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { type ActionFunctionArgs, json, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
@@ -6,9 +6,9 @@ import { format } from "date-fns";
 import React from "react";
 import invariant from "tiny-invariant";
 
-import { AddMembersToGroupButton } from "~/components/add-members-to-group-button";
 import { GoBackIcon } from "~/components/go-back-icon";
 import { Link } from "~/components/link";
+import { PageBody } from "~/components/page-body";
 import { PageHeader } from "~/components/page-header";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
@@ -25,7 +25,7 @@ import { Input } from "~/components/ui/input";
 import { Separator } from "~/components/ui/separator";
 import { getUserGroupDebts } from "~/models/debt.server";
 import { getGroupById, updateGroup } from "~/models/group.server";
-import { LeaveGroupButton } from "~/routes/resource.group.leave";
+import { AddMembersToGroupButton, DeleteGroupButton, LeaveGroupButton } from "~/routes/resource.group";
 import { requireUserId } from "~/session.server";
 import { cn, currencyFormatter, getUsersBalance, useUser } from "~/utils";
 
@@ -68,10 +68,10 @@ export default function GroupPage() {
       <PageHeader left={<GoBackIcon to="/groups" className="z-30" />} right={<GroupActions />}>
         <GroupWallpaper />
       </PageHeader>
-      <div className="mt-44 space-y-3">
+      <PageBody className="mt-6">
         <GroupTitle />
         <GroupExpensesTable />
-      </div>
+      </PageBody>
     </>
   );
 }
@@ -134,10 +134,7 @@ function GroupActions() {
                 You cant leave the group because you have debts with other group members.
               </span>
             ) : null}
-            <Button variant="destructive" className="w-full">
-              <TrashIcon className="h-4 w-4 mr-2" />
-              Delete group
-            </Button>
+            <DeleteGroupButton groupId={group.id} />
           </div>
         </DrawerFooter>
       </DrawerContent>
@@ -164,7 +161,7 @@ function GroupTitle() {
   const { debt, group } = useLoaderData<typeof loader>();
   const friends = group.members.filter((member) => member.userId !== user.id).length;
 
-  let description = "";
+  let description: string;
   if (group.expenses.length < 1) description = "No expenses yet.";
   else if (debt.balance === 0) description = "You are all settled up";
   else if (debt.balance > 0) description = `You are owed a total of ${currencyFormatter(debt.balance)}`;

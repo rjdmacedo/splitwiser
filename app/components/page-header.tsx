@@ -11,9 +11,9 @@ interface PageHeaderProps {
 
 export function PageHeader({ left = null, right = null, className, children }: PageHeaderProps) {
   return (
-    <div className={cn("container absolute h-32 inset-0 bg-sky-500", className)}>
+    <div className={cn("container h-32 bg-sky-500 py-4", className)}>
       {left || right ? (
-        <div className="flex justify-between pt-4 text-background">
+        <div className="flex justify-between text-background">
           {left}
           {right}
         </div>

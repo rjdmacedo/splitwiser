@@ -58,6 +58,17 @@ export async function updateGroup(id: string, data: Prisma.GroupUpdateInput) {
   }
 }
 
+export async function deleteGroup(id: string) {
+  try {
+    return await prisma.group.delete({
+      where: { id },
+    });
+  } catch (error) {
+    const err = error as Error;
+    throw new Error(err.message);
+  }
+}
+
 export async function addMemberToGroup(groupId: string, email: string) {
   try {
     const user = await prisma.user.findUnique({ where: { email } });

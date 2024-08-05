@@ -5,6 +5,7 @@ import { Form, useLoaderData } from "@remix-run/react";
 import React from "react";
 
 import { Link } from "~/components/link";
+import { PageBody } from "~/components/page-body";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import {
@@ -54,32 +55,34 @@ export default function AuthGroupsPage() {
   const { debts, balance } = useLoaderData<typeof loader>();
 
   return (
-    <div className="w-full space-y-2">
-      <div className="flex items-center justify-end">
-        <CreateGroupDrawer>
-          <Button variant="ghost">Create group</Button>
-        </CreateGroupDrawer>
+    <PageBody>
+      <div className="w-full space-y-2">
+        <div className="flex items-center justify-end">
+          <CreateGroupDrawer>
+            <Button variant="ghost">Create group</Button>
+          </CreateGroupDrawer>
+        </div>
+
+        <BalanceAndFilter balance={balance} />
+
+        <div className="flex flex-col space-y-3">
+          {debts.map(({ groupId, groupName, balance, members }) => (
+            <Link to={groupId} key={groupId}>
+              <Card className="flex flex-col p-4 space-y-1">
+                <div className="font-bold flex items-center justify-between">
+                  {groupName}
+                  <span className={cn(balance >= 0 ? "text-green-600" : "text-red-600")}>
+                    {currencyFormatter(balance)}
+                  </span>
+                </div>
+
+                <MembersList members={members} />
+              </Card>
+            </Link>
+          ))}
+        </div>
       </div>
-
-      <BalanceAndFilter balance={balance} />
-
-      <div className="flex flex-col space-y-3">
-        {debts.map(({ groupId, groupName, balance, members }) => (
-          <Link to={groupId} key={groupId}>
-            <Card className="flex flex-col p-4 space-y-1">
-              <div className="font-bold flex items-center justify-between">
-                {groupName}
-                <span className={cn(balance >= 0 ? "text-green-600" : "text-red-600")}>
-                  {currencyFormatter(balance)}
-                </span>
-              </div>
-
-              <MembersList members={members} />
-            </Card>
-          </Link>
-        ))}
-      </div>
-    </div>
+    </PageBody>
   );
 }
 

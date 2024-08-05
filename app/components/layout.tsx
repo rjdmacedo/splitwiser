@@ -8,6 +8,7 @@ import {
 import React from "react";
 
 import { Link, LinkProps } from "~/components/link";
+import { buttonVariants } from "~/components/ui/button";
 import { cn } from "~/utils";
 
 interface LayoutProps {
@@ -17,7 +18,7 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   return (
     <div className="relative flex min-h-screen flex-col">
-      <main className="flex-grow container py-4">{children}</main>
+      <main className="flex-grow">{children}</main>
 
       <nav className="sticky z-40 p-4 bottom-0 flex h-16 bg-background items-center border-t justify-between">
         <NavigationLink to="friends" title="Friends">
@@ -28,7 +29,9 @@ export function Layout({ children }: LayoutProps) {
           <UserGroupIcon className="h-5" />
         </NavigationLink>
 
-        <PlusCircleIcon className="h-10" />
+        <Link to="/expense/create" className={buttonVariants({ size: "icon", variant: "ghost" })}>
+          <PlusCircleIcon className="h-10" />
+        </Link>
 
         <NavigationLink to="activity" title="Activity">
           <PresentationChartLineIcon className="h-5" />

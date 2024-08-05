@@ -57,6 +57,13 @@ export async function requireUser(request: Request) {
   throw await logout(request);
 }
 
+export async function requireGroupId(request: Request) {
+  const formData = await request.clone().formData();
+  const groupId = formData.get("groupId") as string;
+  invariant(groupId, "groupId should be defined.");
+  return groupId;
+}
+
 export async function createUserSession({
   request,
   userId,
