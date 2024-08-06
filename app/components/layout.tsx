@@ -5,6 +5,7 @@ import {
   UserCircleIcon,
   PresentationChartLineIcon,
 } from "@heroicons/react/24/outline";
+import { useHref, useParams } from "@remix-run/react";
 import React from "react";
 
 import { Link, LinkProps } from "~/components/link";
@@ -16,6 +17,9 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
+  const { group } = useParams<{ group?: string }>();
+  const createExpenseHref = useHref(group ? `${group}/expense/create` : "/expense/create");
+
   return (
     <div className="relative flex min-h-screen flex-col">
       <main className="flex-grow">{children}</main>
@@ -29,7 +33,7 @@ export function Layout({ children }: LayoutProps) {
           <UserGroupIcon className="h-5" />
         </NavigationLink>
 
-        <Link to="/expense/create" className={buttonVariants({ size: "icon", variant: "ghost" })}>
+        <Link to={createExpenseHref} className={buttonVariants({ size: "icon", variant: "ghost" })}>
           <PlusCircleIcon className="h-10" />
         </Link>
 

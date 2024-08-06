@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import invariant from "tiny-invariant";
 
 import { GoBackIcon } from "~/components/go-back-icon";
+import { PageBody } from "~/components/page-body";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/ui/button";
 import { UserAvatar } from "~/components/user-avatar";
@@ -65,7 +66,7 @@ export default function ExpensePage() {
         <h1 className="text-lg text-background">{expense.description}</h1>
         <h3 className="text-2xl text-background">{currencyFormatter(expense.amount)}</h3>
       </PageHeader>
-      <div className="mt-32 space-y-3">
+      <PageBody className="space-y-2">
         <div className="flex items-center">
           Added by {expense.paidBy.name} on {format(expense.createdAt, "MMM d, yyyy")}
         </div>
@@ -87,7 +88,7 @@ export default function ExpensePage() {
             </li>
           ))}
         </ul>
-      </div>
+      </PageBody>
     </>
   );
 }
