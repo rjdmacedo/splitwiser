@@ -1,12 +1,13 @@
 import { PlusIcon, UserIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { User } from "@prisma/client";
 import { useFetcher } from "@remix-run/react";
 import React from "react";
 import { useRemixForm } from "remix-hook-form";
-import * as zod from "zod";
 
 import { Chip, ChipGroup } from "~/components/chip";
+import { ExpenseProvider, strategyMapper, useExpenseContext } from "~/components/form/expense/context";
+import { ExpenseFormProps } from "~/components/form/expense/expense";
+import { ExpenseUpsertFormData, ExpenseUpsertSchema } from "~/components/form/expense/schema";
 import { Avatar, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
@@ -23,31 +24,23 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "~/components/ui/input";
 import { Separator } from "~/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { action } from "~/routes/resource.group";
 import { cn, currencyFormatter, useUser } from "~/utils";
 
-interface ExpenseFormProps {
-  groupId?: string;
-  members?: User[];
-}
-
-interface Split {
-  user: User;
-  amount: number;
-}
-
-interface Strategy {
-  type: StrategyType;
-  splits: Split[];
-}
-
 export function ExpenseForm({ members }: ExpenseFormProps) {
+  return (
+    <ExpenseProvider members={members}>
+      <ExpenseFormContent />
+    </ExpenseProvider>
+  );
+}
+
+function ExpenseFormContent() {
   const user = useUser();
-  const fetcher = useFetcher<typeof action>();
-  const [strategy, setStrategy] = React.useState<Strategy>({ type: "equally", splits: [] });
+  const fetcher = useFetcher();
+  const { members, strategy, expenseAmount, setExpenseAmount } = useExpenseContext();
 
   const form = useRemixForm<ExpenseUpsertFormData>({
-    resolver: ExpenseUpsertResolver,
+    resolver: zodResolver(ExpenseUpsertSchema),
     defaultValues: { amount: 0, description: "" },
     submitHandlers: {
       onValid: (data) =>
@@ -60,13 +53,17 @@ export function ExpenseForm({ members }: ExpenseFormProps) {
 
   const amount = form.watch("amount");
 
-  // const isSubmitting = fetcher.formAction === "/resource/expense?/upsert";
+  React.useEffect(() => {
+    if (amount <= 0) return;
+    setExpenseAmount(amount);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [amount]);
 
   return (
     <div className="space-y-5">
       <ChipGroup className="w-full justify-between items-start">
         <div className="flex gap-1 flex-wrap">
-          {members && members.length > 0 ? (
+          {members.length > 0 ? (
             <Chip
               size="sm"
               label={`With all ${members.length} members`}
@@ -108,7 +105,7 @@ export function ExpenseForm({ members }: ExpenseFormProps) {
               <FormItem>
                 <FormLabel>Amount</FormLabel>
                 <FormControl>
-                  <Input {...field} type="number" min={0} placeholder="0.00" />
+                  <Input {...field} min={0} type="number" placeholder="0.00" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -117,37 +114,15 @@ export function ExpenseForm({ members }: ExpenseFormProps) {
         </fetcher.Form>
       </Form>
 
-      <div
-        className={cn("flex justify-center items-center", {
-          "text-muted-foreground": amount <= 0,
-        })}
-      >
-        <fieldset disabled={amount <= 0}>
+      <div className={cn("flex justify-center items-center", { "text-muted-foreground": expenseAmount <= 0 })}>
+        <fieldset disabled={expenseAmount <= 0 || members.length < 1}>
           Paid by <PaidByDrawer>{user.name}</PaidByDrawer> and divided{" "}
-          <DividedStrategyDrawer
-            amount={amount}
-            members={members || []}
-            onSelect={(strategy) => {
-              console.log(strategy);
-              setStrategy(strategy);
-            }}
-          >
-            {strategyMapper[strategy.type].title}
-          </DividedStrategyDrawer>
+          <SplitStrategyDrawer>{strategy.type}</SplitStrategyDrawer>
         </fieldset>
       </div>
     </div>
   );
 }
-
-const ExpenseUpsertSchema = zod.object({
-  amount: zod.coerce.number().min(0, { message: "Amount must be greater than 0." }),
-  description: zod.string({ message: "Please enter a description." }),
-});
-
-const ExpenseUpsertResolver = zodResolver(ExpenseUpsertSchema);
-
-type ExpenseUpsertFormData = zod.infer<typeof ExpenseUpsertSchema>;
 
 function PaidByDrawer({ children }: { children: React.ReactNode }) {
   return (
@@ -159,68 +134,18 @@ function PaidByDrawer({ children }: { children: React.ReactNode }) {
   );
 }
 
-type StrategyType = "equally" | "byAmount" | "byPercentage";
-
-const strategyMapper: Record<StrategyType, { title: string; description: string }> = {
-  equally: { title: "equally", description: "Divide the amount equally among the selected members." },
-  byAmount: { title: "by amount", description: "Divide the amount by the specified amount." },
-  byPercentage: { title: "by percentage", description: "Divide the amount by the specified percentage." },
-};
-
-function DividedStrategyDrawer({
-  amount,
-  members,
-  children,
-  onSelect,
-}: {
-  amount: number;
-  members: User[];
-  children: React.ReactNode;
-  onSelect: (strategy: Strategy) => void;
-}) {
+function SplitStrategyDrawer({ children }: { children: React.ReactNode }) {
   const user = useUser();
-  const [splits, setSplits] = React.useState<Split[]>([]);
-  const [strategyType, setStrategyType] = React.useState<StrategyType>("equally");
-  const [membersToSplit, setMembersToSplit] = React.useState<User[]>(members);
+  const { split, members, strategy, expenseAmount, membersToSplit, setStrategyType, setMembersToSplit } =
+    useExpenseContext();
 
-  const computedHeader = "Divide " + strategyMapper[strategyType].title;
-  const computedDescription = strategyMapper[strategyType].description;
+  console.log({ split, membersToSplit });
 
-  function calculateSplits() {
-    switch (strategyType) {
-      case "equally":
-        // I want to refactor this component logic
-        setSplits(
-          membersToSplit.reduce<Split[]>(
-            (acc, member) => [
-              ...acc,
-              {
-                user: member,
-                amount: amount / membersToSplit.length,
-              },
-            ],
-            [],
-          ),
-        );
-        break;
-      case "byAmount":
-        break;
-      case "byPercentage":
-        break;
-    }
-  }
-
-  React.useEffect(() => {
-    if (amount > 0) calculateSplits();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [amount, strategyType, membersToSplit]);
+  const computedHeader = "Divide " + strategyMapper[strategy.type].title;
+  const computedDescription = strategyMapper[strategy.type].description;
 
   return (
-    <Drawer
-      onClose={() => onSelect({ type: strategyType, splits })}
-      dismissible={membersToSplit.length > 0}
-      shouldScaleBackground
-    >
+    <Drawer dismissible={membersToSplit.length > 0}>
       <DrawerTrigger asChild>
         <Button size="sm">{children}</Button>
       </DrawerTrigger>
@@ -230,7 +155,7 @@ function DividedStrategyDrawer({
           <DrawerDescription>{computedDescription}</DrawerDescription>
         </DrawerHeader>
         <DrawerFooter>
-          <Tabs value={strategyType}>
+          <Tabs value={strategy.type}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="equally" onClick={() => setStrategyType("equally")}>
                 Equally
@@ -244,38 +169,41 @@ function DividedStrategyDrawer({
             </TabsList>
             <TabsContent value="equally">
               <div className="gap-2 flex flex-col justify-between items-center">
-                {members.map((member, idx) => (
+                {members.map((member) => (
                   <React.Fragment key={`splits-${member.id}`}>
                     <div className="w-full flex justify-between items-center">
                       <div className="flex-grow flex items-center gap-2">
                         <Avatar key={member.id} className="flex items-center">
                           <AvatarImage src="https://randomuser.me/api/portraits/thumb/men/1.jpg" alt="Avatar" />
                         </Avatar>
-                        <span className={cn({ "font-bold": user.id === member.id })}>
+                        <span className={cn({ "font-bold": split[member.id] })}>
                           {member.name}
                           {user.id === member.id ? " (You)" : ""}
                         </span>
                       </div>
-                      <Checkbox
-                        checked={membersToSplit.some((m) => m.id === member.id)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setMembersToSplit((prev) => [...prev, member]);
-                          } else {
-                            setMembersToSplit((prev) => prev.filter((m) => m.id !== member.id));
-                          }
-                        }}
-                      />
+                      <div className="flex items-center gap-2">
+                        <span>{currencyFormatter(split?.[member.id]?.amount || 0)}</span>
+                        <Checkbox
+                          checked={membersToSplit.some((memberId) => memberId === member.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setMembersToSplit([...membersToSplit, member.id]);
+                            } else {
+                              setMembersToSplit(membersToSplit.filter((id) => id !== member.id));
+                            }
+                          }}
+                        />
+                      </div>
                     </div>
                     <Separator />
                   </React.Fragment>
                 ))}
-
                 <div className="w-full flex flex-col justify-center gap-2">
                   <DrawerDescription>Summary of this split.</DrawerDescription>
+
                   <div className="inline-flex items-center">
                     <UsersIcon className="w-5 h-5 mr-1" />
-                    Expense total amount is {currencyFormatter(amount)}
+                    Expense total amount is {currencyFormatter(expenseAmount)}
                   </div>
                   <div
                     className={cn("inline-flex items-center", {
@@ -284,14 +212,12 @@ function DividedStrategyDrawer({
                   >
                     <UserIcon className="w-5 h-5 mr-1" />
                     {membersToSplit.length > 0
-                      ? `Each member pays ${currencyFormatter(amount / membersToSplit.length)}`
+                      ? `Each selected member pays ${currencyFormatter(expenseAmount / membersToSplit.length)}`
                       : "No members selected."}
                   </div>
                 </div>
               </div>
             </TabsContent>
-            <TabsContent value="byAmount">By amount</TabsContent>
-            <TabsContent value="byPercentage">By percentage</TabsContent>
           </Tabs>
         </DrawerFooter>
       </DrawerContent>

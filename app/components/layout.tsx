@@ -22,7 +22,9 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="relative flex min-h-screen flex-col">
-      <main className="flex-grow">{children}</main>
+      <main vaul-drawer-wrapper="" className="flex-grow">
+        {children}
+      </main>
 
       <nav className="sticky z-40 p-4 bottom-0 flex h-16 bg-background items-center border-t justify-between">
         <NavigationLink to="friends" title="Friends">

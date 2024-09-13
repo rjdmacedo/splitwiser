@@ -9,67 +9,34 @@ interface FriendDebt {
 }
 
 export async function getUserDebts(userId: string): Promise<FriendDebt[]> {
-  // Fetch expenses paid by the user
-  const paidExpenses = await prisma.expense.findMany({
-    where: { paidById: userId },
-    include: { splits: true },
+  // Fetch expenses with splits where the user has made payments
+  const expenses = await prisma.expense.findMany({
+    where: { payments: { some: { paidById: userId } } },
+    include: { splits: { include: { user: true } }, payments: true },
   });
 
-  // Calculate how much each friend owes the user
-  const userOwed = paidExpenses.reduce(
-    (acc, expense) => {
-      expense.splits.forEach((split) => {
-        if (split.userId !== userId) {
-          acc[split.userId] = (acc[split.userId] || 0) + split.amount;
+  // Calculate debts
+  const debts: Record<string, FriendDebt> = {};
+
+  for (const expense of expenses) {
+    for (const split of expense.splits) {
+      if (split.userId !== userId) {
+        const amountOwed = split.amount;
+        if (!debts[split.userId]) {
+          debts[split.userId] = {
+            friendId: split.user.id,
+            friendName: split.user.name,
+            amount: 0,
+          };
         }
-      });
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
-
-  // Fetch expenses where the user owes money
-  const owedExpenses = await prisma.split.findMany({
-    where: { userId: userId },
-    include: {
-      expense: {
-        include: { paidBy: true },
-      },
-    },
-  });
-
-  // Calculate how much the user owes to each friend
-  const userOwes = owedExpenses.reduce(
-    (acc, split) => {
-      const paidById = split.expense.paidById;
-      if (paidById !== userId) {
-        acc[paidById] = (acc[paidById] || 0) + split.amount;
+        debts[split.userId].amount += amountOwed;
       }
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
-
-  // Combine the debts
-  const combinedDebts: Record<string, number> = { ...userOwed };
-  for (const friendId in userOwes) {
-    combinedDebts[friendId] = (combinedDebts[friendId] || 0) - userOwes[friendId];
+    }
   }
 
-  // Fetch friend names
-  const friendDebts: FriendDebt[] = [];
-  for (const friendId in combinedDebts) {
-    const friend = await prisma.user.findUnique({ where: { id: friendId } });
-    friendDebts.push({
-      friendId,
-      friendName: friend?.name || "Unknown",
-      amount: combinedDebts[friendId],
-    });
-  }
-
-  return friendDebts;
+  // Convert debts object to array
+  return Object.values(debts);
 }
-
 export interface GroupDebt {
   groupId: string;
   balance: number;
@@ -82,13 +49,17 @@ export interface GroupDebt {
   }[];
 }
 
+/**
+ * aims to calculate the debt balances within groups where the user is a member.
+ * @param userId the user id
+ */
 export async function getUserGroupsDebts(userId: string): Promise<GroupDebt[]> {
   // Fetch groups where the user is a member
   const groups = await prisma.group.findMany({
     where: { members: { some: { userId } } },
     include: {
       members: { include: { user: true } },
-      expenses: { include: { splits: true, paidBy: true } },
+      expenses: { include: { splits: true, payments: { include: { paidBy: true } } } },
     },
   });
 
@@ -107,25 +78,20 @@ export async function getUserGroupsDebts(userId: string): Promise<GroupDebt[]> {
 
     // Calculate balances based on expenses and splits
     group.expenses.forEach((expense) => {
-      if (expense.paidById !== userId) {
-        // If the expense was not paid by the user, check splits involving the user
-        expense.splits.forEach((split) => {
-          if (split.userId === userId) {
-            // The user owes this amount to the payer
-            balances[expense.paidById] = (balances[expense.paidById] || 0) - split.amount;
+      expense.splits.forEach((split) => {
+        if (split.userId === userId) {
+          // The user owes this amount to the payer
+          const payerId = expense.payments.find((payment) => payment.paidById !== userId)?.paidById;
+          if (payerId) {
+            balances[payerId] = (balances[payerId] || 0) - split.amount;
             userBalance -= split.amount;
           }
-        });
-      } else {
-        // If the expense was paid by the user, check splits involving other users
-        expense.splits.forEach((split) => {
-          if (split.userId !== userId) {
-            // Other user owes this amount to the current user
-            balances[split.userId] = (balances[split.userId] || 0) + split.amount;
-            userBalance += split.amount;
-          }
-        });
-      }
+        } else if (expense.payments.some((payment) => payment.paidById === userId)) {
+          // The user paid this expense and other members owe the user
+          balances[split.userId] = (balances[split.userId] || 0) + split.amount;
+          userBalance += split.amount;
+        }
+      });
     });
 
     // Convert balances to members format
@@ -153,7 +119,7 @@ export async function getUserGroupDebts(userId: string, groupId: string): Promis
     where: { id: groupId },
     include: {
       members: { include: { user: true } },
-      expenses: { include: { splits: true, paidBy: true } },
+      expenses: { include: { splits: true, payments: { include: { paidBy: true } } } },
     },
   });
 
@@ -172,25 +138,20 @@ export async function getUserGroupDebts(userId: string, groupId: string): Promis
 
   // Calculate balances based on expenses and splits
   group.expenses.forEach((expense) => {
-    if (expense.paidById !== userId) {
-      // If the expense was not paid by the user, check splits involving the user
-      expense.splits.forEach((split) => {
-        if (split.userId === userId) {
-          // The user owes this amount to the payer
-          balances[expense.paidById] = (balances[expense.paidById] || 0) - split.amount;
+    expense.splits.forEach((split) => {
+      if (split.userId === userId) {
+        // The user owes this amount to the payer
+        const payerId = expense.payments.find((payment) => payment.paidById !== userId)?.paidById;
+        if (payerId) {
+          balances[payerId] = (balances[payerId] || 0) - split.amount;
           userBalance -= split.amount;
         }
-      });
-    } else {
-      // If the expense was paid by the user, check splits involving other users
-      expense.splits.forEach((split) => {
-        if (split.userId !== userId) {
-          // Other user owes this amount to the current user
-          balances[split.userId] = (balances[split.userId] || 0) + split.amount;
-          userBalance += split.amount;
-        }
-      });
-    }
+      } else if (expense.payments.some((payment) => payment.paidById === userId)) {
+        // The user paid this expense and other members owe the user
+        balances[split.userId] = (balances[split.userId] || 0) + split.amount;
+        userBalance += split.amount;
+      }
+    });
   });
 
   // Convert balances to members format
@@ -205,8 +166,8 @@ export async function getUserGroupDebts(userId: string, groupId: string): Promis
 
   return {
     groupId: group.id,
-    balance: Number(userBalance.toFixed(2)), // Ensure the balance is a number
-    members: members,
     groupName: group.name,
+    balance: Number(userBalance.toFixed(2)), // Ensure the balance is a number
+    members,
   };
 }

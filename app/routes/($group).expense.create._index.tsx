@@ -2,7 +2,7 @@ import { User } from "@prisma/client";
 import { json, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 
-import { ExpenseForm } from "~/components/form/expense-form";
+import { ExpenseForm } from "~/components/form/expense";
 import { GoBackIcon } from "~/components/go-back-icon";
 import { PageBody } from "~/components/page-body";
 import { PageHeader } from "~/components/page-header";
